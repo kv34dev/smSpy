@@ -4,16 +4,12 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 import time
 
-# -------------------------------
 # Chrome driver setup
-# -------------------------------
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
 driver.get("https://anonyig.com")
 time.sleep(3)  # wait for the page to fully load
 
-# -------------------------------
 # Add a red circle for click animation
-# -------------------------------
 driver.execute_script("""
 if (!document.getElementById('click-animation')) {
     let circle = document.createElement('div');
@@ -30,52 +26,36 @@ if (!document.getElementById('click-animation')) {
 }
 """)
 
-# -------------------------------
-# Coordinates
-# -------------------------------
-# Overlay click coordinates (will be calculated dynamically)
-second_x = 100  # X coordinate for second click + input
-second_y = 270  # Y coordinate for second click + input
+# Coordinates for second click + input
+second_x = 100
+second_y = 270
 
-# -------------------------------
 # Step 0: Wait 1 second after page load
-# -------------------------------
 time.sleep(1)
 
-# -------------------------------
-# Step 1: Triple click on overlay
-# -------------------------------
-# Get overlay center coordinates via JS
-overlay_center = driver.execute_script("""
-let overlay = document.querySelector('.fc-dialog-overlay');
-if (overlay) {
-    let rect = overlay.getBoundingClientRect();
-    return [rect.left + rect.width / 2, rect.top + rect.height / 2];
-}
-return [0, 0];
-""")
-first_x, first_y = overlay_center
+# Step 1: Find "Отказаться" button and click it 3 times
+for _ in range(1):
+    driver.execute_script("""
+    let button = Array.from(document.querySelectorAll('p.fc-button-label'))
+                      .find(el => el.textContent.trim() === 'Отказаться');
+    if (button) {
+        let rect = button.getBoundingClientRect();
+        let centerX = rect.left + rect.width / 2;
+        let centerY = rect.top + rect.height / 2;
 
-for _ in range(3):
-    driver.execute_script(f"""
-    let circle = document.getElementById('click-animation');
-    circle.style.left = '{first_x - 15}px';
-    circle.style.top = '{first_y - 15}px';
-    circle.style.transform = 'scale(1.5)';
-    setTimeout(() => {{ circle.style.transform = 'scale(1)'; }}, 100);
+        let circle = document.getElementById('click-animation');
+        circle.style.left = (centerX - 15) + 'px';
+        circle.style.top = (centerY - 15) + 'px';
+        circle.style.transform = 'scale(1.5)';
+        setTimeout(() => { circle.style.transform = 'scale(1)'; }, 100);
 
-    let elem = document.elementFromPoint({first_x}, {first_y});
-    if (elem) {{
-        elem.focus();
-        elem.click();
-    }}
+        button.focus();
+        button.click();
+    }
     """)
-    time.sleep(0.2)  # short pause between clicks
 
-# -------------------------------
 # Step 2: Wait 2 seconds, then click second coordinates + input
-# -------------------------------
-time.sleep(2)
+time.sleep(0.1)
 
 driver.execute_script(f"""
 let circle = document.getElementById('click-animation');
@@ -93,16 +73,12 @@ if (elem) {{
 
 time.sleep(0.5)  # wait for the input to gain focus
 
-# -------------------------------
-# Type "cristiano" in the input field
-# -------------------------------
+# Step 3: Type "cristiano" in the input field
 active_element = driver.switch_to.active_element
 active_element.send_keys("cristiano")
 active_element.send_keys(Keys.RETURN)  # press Enter to submit
 
-time.sleep(60)  # wait to see the result
+time.sleep(300)  # wait to see the result
 
-# -------------------------------
 # Close the browser
-# -------------------------------
 driver.quit()
