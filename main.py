@@ -9,7 +9,7 @@ import time
 # -------------------------------
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
 driver.get("https://anonyig.com")
-time.sleep(3)  # wait for the page to load
+time.sleep(3)  # wait for the page to fully load
 
 # -------------------------------
 # Add a red circle for click animation
@@ -31,27 +31,63 @@ if (!document.getElementById('click-animation')) {
 """)
 
 # -------------------------------
-# Coordinates for the click
+# Coordinates
 # -------------------------------
-x_coord = 100  # X coordinate
-y_coord = 270  # Y coordinate
+# Overlay click coordinates (will be calculated dynamically)
+second_x = 100  # X coordinate for second click + input
+second_y = 270  # Y coordinate for second click + input
 
 # -------------------------------
-# Animate and click the input element
+# Step 0: Wait 1 second after page load
 # -------------------------------
+time.sleep(1)
+
+# -------------------------------
+# Step 1: Triple click on overlay
+# -------------------------------
+# Get overlay center coordinates via JS
+overlay_center = driver.execute_script("""
+let overlay = document.querySelector('.fc-dialog-overlay');
+if (overlay) {
+    let rect = overlay.getBoundingClientRect();
+    return [rect.left + rect.width / 2, rect.top + rect.height / 2];
+}
+return [0, 0];
+""")
+first_x, first_y = overlay_center
+
+for _ in range(3):
+    driver.execute_script(f"""
+    let circle = document.getElementById('click-animation');
+    circle.style.left = '{first_x - 15}px';
+    circle.style.top = '{first_y - 15}px';
+    circle.style.transform = 'scale(1.5)';
+    setTimeout(() => {{ circle.style.transform = 'scale(1)'; }}, 100);
+
+    let elem = document.elementFromPoint({first_x}, {first_y});
+    if (elem) {{
+        elem.focus();
+        elem.click();
+    }}
+    """)
+    time.sleep(0.2)  # short pause between clicks
+
+# -------------------------------
+# Step 2: Wait 2 seconds, then click second coordinates + input
+# -------------------------------
+time.sleep(2)
+
 driver.execute_script(f"""
 let circle = document.getElementById('click-animation');
-// Move circle to click position and animate
-circle.style.left = '{x_coord - 15}px';
-circle.style.top = '{y_coord - 15}px';
+circle.style.left = '{second_x - 15}px';
+circle.style.top = '{second_y - 15}px';
 circle.style.transform = 'scale(1.5)';
 setTimeout(() => {{ circle.style.transform = 'scale(1)'; }}, 100);
 
-// Find the element under the coordinates
-let elem = document.elementFromPoint({x_coord}, {y_coord});
+let elem = document.elementFromPoint({second_x}, {second_y});
 if (elem) {{
-    elem.focus();             // Ensure input is focused
-    elem.click();             // Trigger click event
+    elem.focus();
+    elem.click();
 }}
 """)
 
