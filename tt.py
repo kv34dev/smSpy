@@ -33,7 +33,7 @@ second_y = 280
 # Step 0: Wait 1 second after page load
 time.sleep(1)
 
-# Step 1: Find "Отказаться" button and click it 3 times
+# Step 1: Find "Do not consent" button and click it 3 times
 for _ in range(1):
     driver.execute_script("""
     let button = Array.from(document.querySelectorAll('p.fc-button-label'))
