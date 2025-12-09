@@ -5,8 +5,8 @@ Both viewers run **in parallel** using Python threads.
 
 ## Features
 - Automatically launches:
-  - **Anonymous Instagram * Story Viewer** (`third-party tool*`)
-  - **TikTok * Story Viewer** (`third-party tool*`)
+  - **Anonymous Instagram * Story Viewer** (`third-party tool`*)
+  - **TikTok * Story Viewer** (`third-party tool`*)
 - Custom red **click-animation indicator** injected into the page.
 - Automatically clicks cookie-banner buttons:
   - *"Отказаться"* (Russian “Reject”) on Instagram*
@@ -56,6 +56,6 @@ Two automated Chrome windows will open and begin processing.
 > [!WARNING]
 > This script is intended for educational and personal automation purposes only.
 > 
-> Using automated tools may violate terms of service of third-party websites.
+> Using automated tools may violate terms of service of third-party websites*.
 >
 > Use responsibly and at your own risk.
