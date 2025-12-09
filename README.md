@@ -5,8 +5,8 @@ Both viewers run **in parallel** using Python threads.
 
 ## Features
 - Automatically launches:
-  - **Anonymous Instagram Story Viewer** (`third-party tool*`)
-  - **TikTok Story Viewer** (`third-party tool*`)
+  - **Anonymous Instagram * Story Viewer** (`third-party tool*`)
+  - **TikTok * Story Viewer** (`third-party tool*`)
 - Custom red **click-animation indicator** injected into the page.
 - Automatically clicks cookie-banner buttons:
   - *"Отказаться"* (Russian “Reject”) on Instagram*
