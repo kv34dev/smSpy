@@ -1,4 +1,4 @@
-// for https://anonyig.com/en1/
+// for ig
 
 // input form
 const element = document.querySelector('input.search.search-form__input');
