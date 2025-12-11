@@ -17,7 +17,7 @@ if (element) {
     console.log('Element not found!');
 }
 
-// dont consent cookies
+// n cookies
 const element = document.querySelector('p.fc-button-label');
 
 if (element) {
