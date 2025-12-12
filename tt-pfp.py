@@ -131,7 +131,7 @@ def view_avatar(avatar_url):
 
 
 def main():
-    print("=== TikTok Avatar Parser ===\n")
+    print("===== TikTok Avatar Parser =====\n")
 
     # Ask for username
     username = input("Enter TikTok username (without @): ").strip()
@@ -145,7 +145,7 @@ def main():
 
     # Ask what to do
     print("\nWhat do you want to do?")
-    print("1. View avatar in browser")
+    print("1. View avatar")
     print("2. Download avatar")
     choice = input("Enter your choice (1 or 2): ").strip()
 
@@ -159,7 +159,7 @@ def main():
     avatar_url = get_avatar_url(username)
 
     if not avatar_url:
-        print("Avatar not found. Exiting.")
+        print("Avatar not found.")
         return
 
     # Execute based on choice
