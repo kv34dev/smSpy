@@ -111,7 +111,7 @@ def view_avatar(avatar_url):
     """
     Opens avatar
     """
-    print("\nOpening avatar in browser...")
+    print("\nOpening avatar...")
 
     visible_options = Options()
     visible_driver = webdriver.Chrome(options=visible_options)
@@ -143,7 +143,7 @@ def main():
     username = username.lstrip('@')
 
     print("\nWhat do you want to do?")
-    print("1. View avatar in browser")
+    print("1. View avatar")
     print("2. Download avatar")
     choice = input("Enter your choice (1 or 2): ").strip()
 
