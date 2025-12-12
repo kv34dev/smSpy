@@ -14,7 +14,6 @@ def get_avatar_url(username):
     """
     Gets avatar URL from TikTok profile in hidden mode
     """
-    # Chrome setup in headless mode (hidden) with speed optimizations
     chrome_options = Options()
     chrome_options.add_argument('--headless')
     chrome_options.add_argument('--disable-gpu')
@@ -34,26 +33,22 @@ def get_avatar_url(username):
     avatar_url = None
 
     try:
-        # Build profile URL
+        # build profile url
         profile_url = f"https://www.tiktok.com/@{username}"
         print(f"Opening profile in background: {profile_url}")
 
-        # Open profile page
         driver.get(profile_url)
 
-        # Wait minimal time for HTML to load
         time.sleep(2)
 
-        # Get page HTML source
         page_source = driver.page_source
 
-        # Search for avatar link using regex
-        # Pattern to find img with css-10s4roi class or similar
+        # pattern to find img with css-10s4roi class or similar
         pattern = r'<img[^>]*class="[^"]*ImgAvatar[^"]*"[^>]*src="([^"]+)"[^>]*>'
         matches = re.findall(pattern, page_source)
 
         if not matches:
-            # Try alternative pattern
+            # alternative pattern
             pattern = r'src="([^"]+)"[^>]*class="[^"]*ImgAvatar[^"]*"'
             matches = re.findall(pattern, page_source)
 
@@ -78,20 +73,17 @@ def download_avatar(avatar_url, username):
     Downloads avatar to Downloads folder
     """
     try:
-        # Get Downloads folder path
         downloads_path = os.path.join(os.path.expanduser('~'), 'Downloads')
 
-        # Create filename
+        # create file name
         filename = f"tiktok_avatar_{username}.jpg"
         filepath = os.path.join(downloads_path, filename)
 
         print(f"\nDownloading avatar...")
 
-        # Download image
         response = requests.get(avatar_url, stream=True)
         response.raise_for_status()
 
-        # Save to file
         with open(filepath, 'wb') as file:
             for chunk in response.iter_content(chunk_size=8192):
                 file.write(chunk)
@@ -108,21 +100,18 @@ def view_avatar(avatar_url):
     """
     print("\nOpening avatar in browser...")
 
-    # Create new visible browser
     visible_options = Options()
     visible_driver = webdriver.Chrome(options=visible_options)
 
-    # Set window size to half screen
+    # window size to half screen
     screen_width = visible_driver.execute_script("return window.screen.width;")
     screen_height = visible_driver.execute_script("return window.screen.height;")
     visible_driver.set_window_size(screen_width // 2, screen_height)
     visible_driver.set_window_position(0, 0)
 
-    # Open avatar
     visible_driver.get(avatar_url)
     print("Avatar opened!")
 
-    # Wait so user can see the result
     print("\nPress Enter in console to close browser...")
     input()
 
@@ -140,10 +129,9 @@ def main():
         print("Username cannot be empty!")
         return
 
-    # Remove @ if user entered it
+    # remove @ if user entered it
     username = username.lstrip('@')
 
-    # Ask what to do
     print("\nWhat do you want to do?")
     print("1. View avatar")
     print("2. Download avatar")
@@ -155,14 +143,12 @@ def main():
 
     print(f"\nSearching avatar for user: @{username}\n")
 
-    # Get avatar URL
     avatar_url = get_avatar_url(username)
 
     if not avatar_url:
         print("Avatar not found.")
         return
 
-    # Execute based on choice
     if choice == '1':
         view_avatar(avatar_url)
     else:
