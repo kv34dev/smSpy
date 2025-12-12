@@ -33,7 +33,6 @@ def get_avatar_url(username):
     avatar_url = None
 
     try:
-        # build profile url
         profile_url = f"https://www.tiktok.com/@{username}"
         print(f"Opening profile in background: {profile_url}")
 
@@ -43,21 +42,36 @@ def get_avatar_url(username):
 
         page_source = driver.page_source
 
-        # pattern to find img with css-10s4roi class or similar
-        pattern = r'<img[^>]*class="[^"]*ImgAvatar[^"]*"[^>]*src="([^"]+)"[^>]*>'
-        matches = re.findall(pattern, page_source)
+        # search for avatar using regex
+        # Pattern 1: find img with ImgAvatar
+        pattern1 = r'<img[^>]*class="[^"]*ImgAvatar[^"]*"[^>]*src="([^"]+)"[^>]*>'
+        matches = re.findall(pattern1, page_source)
 
         if not matches:
-            # alternative pattern
-            pattern = r'src="([^"]+)"[^>]*class="[^"]*ImgAvatar[^"]*"'
-            matches = re.findall(pattern, page_source)
+            # alternative pattern for ImgAvatar
+            pattern1_alt = r'src="([^"]+)"[^>]*class="[^"]*ImgAvatar[^"]*"'
+            matches = re.findall(pattern1_alt, page_source)
 
         if matches:
             avatar_url = matches[0]
-            print(f"Found avatar link: {avatar_url}")
+            print(f"Found avatar link (standard): {avatar_url}")
         else:
-            print("Could not find avatar link in page source.")
-            print("Page structure may have changed or profile did not load.")
+            # Pattern 2: find img with TUXBaseAvatar-src user-avatar class (for users with stories)
+            print("Standard pattern not found, trying alternative pattern for users with stories...")
+            pattern2 = r'<img[^>]*class="[^"]*TUXBaseAvatar-src[^"]*user-avatar[^"]*"[^>]*src="([^"]+)"[^>]*>'
+            matches = re.findall(pattern2, page_source)
+
+            if not matches:
+                # reverse pattern
+                pattern2_alt = r'src="([^"]+)"[^>]*class="[^"]*TUXBaseAvatar-src[^"]*user-avatar[^"]*"'
+                matches = re.findall(pattern2_alt, page_source)
+
+            if matches:
+                avatar_url = matches[0]
+                print(f"Found avatar link (stories variant): {avatar_url}")
+            else:
+                print("Could not find avatar link in page source.")
+                print("Page structure may have changed or profile did not load.")
 
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -75,7 +89,6 @@ def download_avatar(avatar_url, username):
     try:
         downloads_path = os.path.join(os.path.expanduser('~'), 'Downloads')
 
-        # create file name
         filename = f"tiktok_avatar_{username}.jpg"
         filepath = os.path.join(downloads_path, filename)
 
@@ -96,14 +109,13 @@ def download_avatar(avatar_url, username):
 
 def view_avatar(avatar_url):
     """
-    Opens avatar in visible browser
+    Opens avatar
     """
     print("\nOpening avatar in browser...")
 
     visible_options = Options()
     visible_driver = webdriver.Chrome(options=visible_options)
 
-    # window size to half screen
     screen_width = visible_driver.execute_script("return window.screen.width;")
     screen_height = visible_driver.execute_script("return window.screen.height;")
     visible_driver.set_window_size(screen_width // 2, screen_height)
@@ -120,20 +132,18 @@ def view_avatar(avatar_url):
 
 
 def main():
-    print("===== TikTok Avatar Parser =====\n")
+    print("=== TikTok Avatar Parser ===\n")
 
-    # Ask for username
     username = input("Enter TikTok username (without @): ").strip()
 
     if not username:
         print("Username cannot be empty!")
         return
 
-    # remove @ if user entered it
     username = username.lstrip('@')
 
     print("\nWhat do you want to do?")
-    print("1. View avatar")
+    print("1. View avatar in browser")
     print("2. Download avatar")
     choice = input("Enter your choice (1 or 2): ").strip()
 
@@ -146,7 +156,7 @@ def main():
     avatar_url = get_avatar_url(username)
 
     if not avatar_url:
-        print("Avatar not found.")
+        print("Avatar not found. Exiting.")
         return
 
     if choice == '1':
