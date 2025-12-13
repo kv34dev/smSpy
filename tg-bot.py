@@ -2,8 +2,10 @@ import os
 import re
 import requests
 import tempfile
+import time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.action_chains import ActionChains
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application,
@@ -16,11 +18,16 @@ from telegram.ext import (
 )
 
 # States for ConversationHandler
-WAITING_USERNAME = 1
-ASKING_CONTINUE = 2
+WAITING_USERNAME_AVATAR = 1
+WAITING_USERNAME_STORIES = 2
+ASKING_CONTINUE = 3
 
 # Bot token (get from @BotFather)
 BOT_TOKEN = "token"
+
+# Coordinates for clicking on stories (you can change these)
+STORY_CLICK_X = 100  # X coordinate
+STORY_CLICK_Y = 200  # Y coordinate
 
 
 def get_tiktok_avatar_url(username):
@@ -48,7 +55,6 @@ def get_tiktok_avatar_url(username):
         profile_url = f"https://www.tiktok.com/@{username}"
         driver.get(profile_url)
 
-        import time
         time.sleep(2)
 
         page_source = driver.page_source
@@ -83,6 +89,66 @@ def get_tiktok_avatar_url(username):
     return avatar_url
 
 
+def get_tiktok_stories(username):
+    """
+    Gets story video URLs from TikTok profile
+    """
+    chrome_options = Options()
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    chrome_options.add_argument('--disable-notifications')
+    chrome_options.add_argument('--disable-popup-blocking')
+    # Don't use headless mode for clicking
+
+    driver = webdriver.Chrome(options=chrome_options)
+    video_urls = []
+
+    try:
+        profile_url = f"https://www.tiktok.com/@{username}"
+        print(f"Opening profile: {profile_url}")
+        driver.get(profile_url)
+
+        time.sleep(3)
+
+        # Click on coordinates to open stories
+        print(f"Clicking on coordinates: ({STORY_CLICK_X}, {STORY_CLICK_Y})")
+        actions = ActionChains(driver)
+        actions.move_by_offset(STORY_CLICK_X, STORY_CLICK_Y).click().perform()
+
+        time.sleep(3)
+
+        # Get page source after clicking
+        page_source = driver.page_source
+
+        # Search for video element with specific pattern
+        # Pattern for video with crossorigin="use-credentials"
+        pattern = r'<video[^>]*crossorigin="use-credentials"[^>]*src="([^"]+)"[^>]*>'
+        matches = re.findall(pattern, page_source)
+
+        if not matches:
+            # Alternative pattern - src first
+            pattern_alt = r'src="([^"]+)"[^>]*crossorigin="use-credentials"'
+            matches = re.findall(pattern_alt, page_source)
+
+        if not matches:
+            # Try to find any video element with src
+            pattern_fallback = r'<video[^>]*src="([^"]+)"[^>]*>'
+            matches = re.findall(pattern_fallback, page_source)
+
+        if matches:
+            video_urls = matches
+            print(f"Found {len(video_urls)} story video(s)")
+        else:
+            print("No stories found in page source")
+
+    except Exception as e:
+        print(f"Error getting stories: {e}")
+    finally:
+        driver.quit()
+
+    return video_urls
+
+
 def download_avatar_to_temp(avatar_url):
     """
     Downloads avatar to temporary file
@@ -103,13 +169,33 @@ def download_avatar_to_temp(avatar_url):
         return None
 
 
+def download_video_to_temp(video_url):
+    """
+    Downloads video to temporary file
+    """
+    try:
+        response = requests.get(video_url, stream=True, timeout=30)
+        response.raise_for_status()
+
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
+
+        for chunk in response.iter_content(chunk_size=8192):
+            temp_file.write(chunk)
+
+        temp_file.close()
+        return temp_file.name
+    except Exception as e:
+        print(f"Error downloading video: {e}")
+        return None
+
+
 def get_main_menu():
     """
     Returns main menu keyboard
     """
     keyboard = [
         [InlineKeyboardButton("TikTok", callback_data='tiktok')],
-        [InlineKeyboardButton("Instagram", callback_data='instagram')]
+        [InlineKeyboardButton("Instagram (coming soon...)", callback_data='instagram')]
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -120,8 +206,8 @@ def get_tiktok_menu():
     """
     keyboard = [
         [InlineKeyboardButton("Get Avatar", callback_data='tiktok_avatar')],
-        [InlineKeyboardButton("View Stories", callback_data='tiktok_stories')],
-        [InlineKeyboardButton("View Reposts", callback_data='tiktok_reposts')],
+        [InlineKeyboardButton("View Stories (coming soon...)", callback_data='tiktok_stories')],
+        [InlineKeyboardButton("View Reposts (coming soon...)", callback_data='tiktok_reposts')],
         [InlineKeyboardButton("← Back", callback_data='back_main')]
     ]
     return InlineKeyboardMarkup(keyboard)
@@ -179,8 +265,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif query.data == 'back_main':
         welcome_text = (
-            "█▀ █▀█ █▄█   ▀█▀ █▀█ █▀█ █░░\n"
-            "▄█ █▀▀ ░█░   ░█░ █▄█ █▄█ █▄▄\n\n"
+            "smSpy\n\n"
             "Fully anonymous spy tool powered by OSINT\n\n"
             "Select platform:"
         )
@@ -194,9 +279,15 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(
             "Enter target username (without @):"
         )
-        return WAITING_USERNAME
+        return WAITING_USERNAME_AVATAR
 
-    elif query.data in ['tiktok_stories', 'tiktok_reposts']:
+    elif query.data == 'tiktok_stories':
+        await query.edit_message_text(
+            "Enter target username (without @):"
+        )
+        return WAITING_USERNAME_STORIES
+
+    elif query.data == 'tiktok_reposts':
         await query.edit_message_text(
             "This feature is coming soon.\n\n"
             "Use /start to return to menu."
@@ -205,8 +296,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif query.data == 'continue_yes':
         welcome_text = (
-            "█▀ █▀█ █▄█   ▀█▀ █▀█ █▀█ █░░\n"
-            "▄█ █▀▀ ░█░   ░█░ █▄█ █▄█ █▄▄\n\n"
+            "smSpy\n\n"
             "Fully anonymous spy tool powered by OSINT\n\n"
             "Select platform:"
         )
@@ -224,7 +314,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return ConversationHandler.END
 
 
-async def receive_username(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def receive_username_avatar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Receives username and parses avatar
     """
@@ -235,7 +325,7 @@ async def receive_username(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Invalid username.\n"
             "Try again or use /start"
         )
-        return WAITING_USERNAME
+        return WAITING_USERNAME_AVATAR
 
     # Send search status
     status_message = await update.message.reply_text(
@@ -301,6 +391,79 @@ async def receive_username(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 
+async def receive_username_stories(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Receives username and parses stories
+    """
+    username = update.message.text.strip().lstrip('@')
+
+    if not username:
+        await update.message.reply_text(
+            "Invalid username.\n"
+            "Try again or use /start"
+        )
+        return WAITING_USERNAME_STORIES
+
+    # Send search status
+    status_message = await update.message.reply_text(
+        f"Scanning target: @{username}\n"
+        "Extracting stories... This may take a moment."
+    )
+
+    try:
+        # Get story video URLs
+        video_urls = get_tiktok_stories(username)
+
+        if not video_urls:
+            await status_message.edit_text(
+                f"No stories found for: @{username}\n\n"
+                "Possible reasons:\n"
+                "• No active stories\n"
+                "• Private profile\n"
+                "• Stories expired\n\n"
+                "Use /start for new session."
+            )
+            return ConversationHandler.END
+
+        await status_message.edit_text(f"Found {len(video_urls)} story/stories. Downloading...")
+
+        # Download and send each video
+        for idx, video_url in enumerate(video_urls, 1):
+            video_path = download_video_to_temp(video_url)
+
+            if not video_path:
+                await update.message.reply_text(f"Failed to download story {idx}")
+                continue
+
+            # Send video
+            with open(video_path, 'rb') as video:
+                await update.message.reply_video(
+                    video=video,
+                    caption=f"Target: @{username}\nStory {idx}/{len(video_urls)}"
+                )
+
+            # Delete temporary file
+            os.unlink(video_path)
+
+        # Delete status message
+        await status_message.delete()
+
+        # Ask if user wants to continue
+        await update.message.reply_text(
+            "Do you want to continue?",
+            reply_markup=get_continue_menu()
+        )
+
+    except Exception as e:
+        await status_message.edit_text(
+            f"Error occurred: {str(e)}\n\n"
+            "Try again later or use /start"
+        )
+        print(f"Error: {e}")
+
+    return ConversationHandler.END
+
+
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Cancel current operation
@@ -326,8 +489,11 @@ def main():
             CallbackQueryHandler(button_handler)
         ],
         states={
-            WAITING_USERNAME: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, receive_username)
+            WAITING_USERNAME_AVATAR: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, receive_username_avatar)
+            ],
+            WAITING_USERNAME_STORIES: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, receive_username_stories)
             ]
         },
         fallbacks=[CommandHandler('cancel', cancel)],
