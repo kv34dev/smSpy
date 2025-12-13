@@ -26,8 +26,15 @@ ASKING_CONTINUE = 3
 BOT_TOKEN = "token"
 
 # Coordinates for clicking on stories (you can change these)
-STORY_CLICK_X = 100  # X coordinate
-STORY_CLICK_Y = 200  # Y coordinate
+STORY_CLICK_X = 760  # X coordinate for first click
+STORY_CLICK_Y = 276  # Y coordinate for first click
+
+STORY_CLICK_X_2 = 275  # X coordinate for second click
+STORY_CLICK_Y_2 = 25  # Y coordinate for second click
+
+# Duration settings
+WINDOW_OPEN_DURATION = 1  # How long window stays open in seconds (2 minutes) - CHANGE THIS
+CLICK_INDICATOR_DURATION = 1  # How long red circle shows in seconds - CHANGE THIS
 
 
 def get_tiktok_avatar_url(username):
@@ -110,10 +117,44 @@ def get_tiktok_stories(username):
 
         time.sleep(3)
 
-        # Click on coordinates to open stories
-        print(f"Clicking on coordinates: ({STORY_CLICK_X}, {STORY_CLICK_Y})")
+        # Function to show red circle at click position
+        def show_click_indicator(x, y):
+            js_code = f"""
+            var circle = document.createElement('div');
+            circle.style.position = 'fixed';
+            circle.style.left = '{x}px';
+            circle.style.top = '{y}px';
+            circle.style.width = '20px';
+            circle.style.height = '20px';
+            circle.style.borderRadius = '50%';
+            circle.style.backgroundColor = 'red';
+            circle.style.zIndex = '999999';
+            circle.style.pointerEvents = 'none';
+            circle.style.transform = 'translate(-50%, -50%)';
+            document.body.appendChild(circle);
+            setTimeout(function() {{
+                circle.remove();
+            }}, {CLICK_INDICATOR_DURATION * 1000});
+            """
+            driver.execute_script(js_code)
+
+        # First click
+        print(f"First click on coordinates: ({STORY_CLICK_X}, {STORY_CLICK_Y})")
+        show_click_indicator(STORY_CLICK_X, STORY_CLICK_Y)
         actions = ActionChains(driver)
         actions.move_by_offset(STORY_CLICK_X, STORY_CLICK_Y).click().perform()
+
+        time.sleep(2)
+
+        # Reset mouse position for second click
+        actions = ActionChains(driver)
+        actions.move_by_offset(-STORY_CLICK_X, -STORY_CLICK_Y).perform()
+
+        # Second click
+        print(f"Second click on coordinates: ({STORY_CLICK_X_2}, {STORY_CLICK_Y_2})")
+        show_click_indicator(STORY_CLICK_X_2, STORY_CLICK_Y_2)
+        actions = ActionChains(driver)
+        actions.move_by_offset(STORY_CLICK_X_2, STORY_CLICK_Y_2).click().perform()
 
         time.sleep(3)
 
@@ -140,6 +181,10 @@ def get_tiktok_stories(username):
             print(f"Found {len(video_urls)} story video(s)")
         else:
             print("No stories found in page source")
+
+        # Keep window open for specified duration
+        print(f"Keeping window open for {WINDOW_OPEN_DURATION} seconds...")
+        time.sleep(WINDOW_OPEN_DURATION)
 
     except Exception as e:
         print(f"Error getting stories: {e}")
@@ -206,7 +251,7 @@ def get_tiktok_menu():
     """
     keyboard = [
         [InlineKeyboardButton("Get Avatar", callback_data='tiktok_avatar')],
-        [InlineKeyboardButton("View Stories (coming soon...)", callback_data='tiktok_stories')],
+        [InlineKeyboardButton("View Stories", callback_data='tiktok_stories')],
         [InlineKeyboardButton("View Reposts (coming soon...)", callback_data='tiktok_reposts')],
         [InlineKeyboardButton("← Back", callback_data='back_main')]
     ]
