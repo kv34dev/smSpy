@@ -15,14 +15,17 @@ from telegram.ext import (
     ConversationHandler
 )
 
+# States for ConversationHandler
 WAITING_USERNAME = 1
+ASKING_CONTINUE = 2
 
+# Bot token (get from @BotFather)
 BOT_TOKEN = "token"
 
 
 def get_tiktok_avatar_url(username):
     """
-    Получает URL аватарки из профиля TikTok
+    Gets avatar URL from TikTok profile
     """
     chrome_options = Options()
     chrome_options.add_argument('--headless')
@@ -50,7 +53,7 @@ def get_tiktok_avatar_url(username):
 
         page_source = driver.page_source
 
-        # Паттерн 1: поиск img с ImgAvatar
+        # Pattern 1: search for img with ImgAvatar
         pattern1 = r'<img[^>]*class="[^"]*ImgAvatar[^"]*"[^>]*src="([^"]+)"[^>]*>'
         matches = re.findall(pattern1, page_source)
 
@@ -61,7 +64,7 @@ def get_tiktok_avatar_url(username):
         if matches:
             avatar_url = matches[0]
         else:
-            # Паттерн 2: для пользователей со stories
+            # Pattern 2: for users with stories
             pattern2 = r'<img[^>]*class="[^"]*TUXBaseAvatar-src[^"]*user-avatar[^"]*"[^>]*src="([^"]+)"[^>]*>'
             matches = re.findall(pattern2, page_source)
 
@@ -73,7 +76,7 @@ def get_tiktok_avatar_url(username):
                 avatar_url = matches[0]
 
     except Exception as e:
-        print(f"Ошибка при получении аватарки: {e}")
+        print(f"Error getting avatar: {e}")
     finally:
         driver.quit()
 
@@ -82,7 +85,7 @@ def get_tiktok_avatar_url(username):
 
 def download_avatar_to_temp(avatar_url):
     """
-    Скачивает аватарку во временный файл
+    Downloads avatar to temporary file
     """
     try:
         response = requests.get(avatar_url, stream=True, timeout=10)
@@ -96,140 +99,227 @@ def download_avatar_to_temp(avatar_url):
         temp_file.close()
         return temp_file.name
     except Exception as e:
-        print(f"Ошибка при скачивании: {e}")
+        print(f"Error downloading: {e}")
         return None
+
+
+def get_main_menu():
+    """
+    Returns main menu keyboard
+    """
+    keyboard = [
+        [InlineKeyboardButton("TikTok", callback_data='tiktok')],
+        [InlineKeyboardButton("Instagram", callback_data='instagram')]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
+def get_tiktok_menu():
+    """
+    Returns TikTok submenu keyboard
+    """
+    keyboard = [
+        [InlineKeyboardButton("Get Avatar", callback_data='tiktok_avatar')],
+        [InlineKeyboardButton("View Stories", callback_data='tiktok_stories')],
+        [InlineKeyboardButton("View Reposts", callback_data='tiktok_reposts')],
+        [InlineKeyboardButton("← Back", callback_data='back_main')]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
+def get_continue_menu():
+    """
+    Returns continue menu keyboard
+    """
+    keyboard = [
+        [InlineKeyboardButton("Yes", callback_data='continue_yes')],
+        [InlineKeyboardButton("No", callback_data='continue_no')]
+    ]
+    return InlineKeyboardMarkup(keyboard)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Обработчик команды /start - показывает главное меню
+    Handler for /start command - shows welcome message
     """
-    keyboard = [
-        [InlineKeyboardButton("🎵 TikTok", callback_data='tiktok')],
-        [InlineKeyboardButton("📷 Instagram (скоро)", callback_data='instagram')]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    welcome_text = (
+        "smSpy\n\n"
+        "Fully anonymous spy tool powered by OSINT\n\n"
+        "Select platform:"
+    )
 
     await update.message.reply_text(
-        '👋 Привет! Я помогу тебе получить аватарку из TikTok или Instagram.\n\n'
-        'Выбери платформу:',
-        reply_markup=reply_markup
+        welcome_text,
+        reply_markup=get_main_menu()
     )
+    return ConversationHandler.END
 
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Обработчик нажатий на кнопки
+    Handler for button presses
     """
     query = update.callback_query
     await query.answer()
 
     if query.data == 'tiktok':
         await query.edit_message_text(
-            '🎵 Введите username пользователя TikTok (без @):\n\n'
-            'Например: khabib_nurmagomedov'
+            "TikTok OSINT\n\n"
+            "Select action:",
+            reply_markup=get_tiktok_menu()
         )
-        return WAITING_USERNAME
+        return ConversationHandler.END
 
     elif query.data == 'instagram':
         await query.edit_message_text(
-            '📷 Instagram функционал находится в разработке.\n\n'
-            'Используйте /start для возврата в меню.'
+            "Instagram module coming soon.\n\n"
+            "Use /start to return to menu."
+        )
+        return ConversationHandler.END
+
+    elif query.data == 'back_main':
+        welcome_text = (
+            "█▀ █▀█ █▄█   ▀█▀ █▀█ █▀█ █░░\n"
+            "▄█ █▀▀ ░█░   ░█░ █▄█ █▄█ █▄▄\n\n"
+            "Fully anonymous spy tool powered by OSINT\n\n"
+            "Select platform:"
+        )
+        await query.edit_message_text(
+            welcome_text,
+            reply_markup=get_main_menu()
+        )
+        return ConversationHandler.END
+
+    elif query.data == 'tiktok_avatar':
+        await query.edit_message_text(
+            "Enter target username (without @):"
+        )
+        return WAITING_USERNAME
+
+    elif query.data in ['tiktok_stories', 'tiktok_reposts']:
+        await query.edit_message_text(
+            "This feature is coming soon.\n\n"
+            "Use /start to return to menu."
+        )
+        return ConversationHandler.END
+
+    elif query.data == 'continue_yes':
+        welcome_text = (
+            "█▀ █▀█ █▄█   ▀█▀ █▀█ █▀█ █░░\n"
+            "▄█ █▀▀ ░█░   ░█░ █▄█ █▄█ █▄▄\n\n"
+            "Fully anonymous spy tool powered by OSINT\n\n"
+            "Select platform:"
+        )
+        await query.edit_message_text(
+            welcome_text,
+            reply_markup=get_main_menu()
+        )
+        return ConversationHandler.END
+
+    elif query.data == 'continue_no':
+        await query.edit_message_text(
+            "Session terminated.\n\n"
+            "Use /start to begin new session."
         )
         return ConversationHandler.END
 
 
 async def receive_username(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Получает username и парсит аватарку
+    Receives username and parses avatar
     """
     username = update.message.text.strip().lstrip('@')
 
     if not username:
         await update.message.reply_text(
-            '❌ Username не может быть пустым!\n'
-            'Попробуйте ещё раз или используйте /start'
+            "Invalid username.\n"
+            "Try again or use /start"
         )
         return WAITING_USERNAME
 
-    # Отправляем сообщение о начале поиска
+    # Send search status
     status_message = await update.message.reply_text(
-        f'🔍 Ищу аватарку для @{username}...\n'
-        'Это может занять несколько секунд.'
+        f"Scanning target: @{username}\n"
+        "Please wait..."
     )
 
     try:
-        # Получаем URL аватарки
+        # Get avatar URL
         avatar_url = get_tiktok_avatar_url(username)
 
         if not avatar_url:
             await status_message.edit_text(
-                f'❌ Не удалось найти аватарку для @{username}\n\n'
-                'Возможные причины:\n'
-                '• Неправильный username\n'
-                '• Профиль приватный\n'
-                '• Профиль не существует\n\n'
-                'Используйте /start для нового поиска.'
+                f"Target not found: @{username}\n\n"
+                "Possible reasons:\n"
+                "• Invalid username\n"
+                "• Private profile\n"
+                "• Profile does not exist\n\n"
+                "Use /start for new session."
             )
             return ConversationHandler.END
 
-        await status_message.edit_text('📥 Скачиваю аватарку...')
+        await status_message.edit_text("Extracting data...")
 
-        # Скачиваем аватарку
+        # Download avatar
         avatar_path = download_avatar_to_temp(avatar_url)
 
         if not avatar_path:
             await status_message.edit_text(
-                '❌ Ошибка при скачивании аватарки.\n'
-                'Попробуйте позже или используйте /start'
+                "Failed to extract avatar.\n"
+                "Try again later or use /start"
             )
             return ConversationHandler.END
 
-        # Отправляем аватарку
-        await status_message.edit_text('✅ Отправляю аватарку...')
+        # Send avatar
+        await status_message.edit_text("Sending data...")
 
         with open(avatar_path, 'rb') as photo:
             await update.message.reply_photo(
                 photo=photo,
-                caption=f'✅ Аватарка @{username}\n\n'
-                        f'Используйте /start для нового поиска.'
+                caption=f"Target: @{username}\nData type: Avatar"
             )
 
-        # Удаляем сообщение о статусе
+        # Delete status message
         await status_message.delete()
 
-        # Удаляем временный файл
+        # Delete temporary file
         os.unlink(avatar_path)
+
+        # Ask if user wants to continue
+        await update.message.reply_text(
+            "Do you want to continue?",
+            reply_markup=get_continue_menu()
+        )
 
     except Exception as e:
         await status_message.edit_text(
-            f'❌ Произошла ошибка: {str(e)}\n\n'
-            'Попробуйте позже или используйте /start'
+            f"Error occurred: {str(e)}\n\n"
+            "Try again later or use /start"
         )
-        print(f"Ошибка: {e}")
+        print(f"Error: {e}")
 
     return ConversationHandler.END
 
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Отмена текущей операции
+    Cancel current operation
     """
     await update.message.reply_text(
-        '❌ Операция отменена.\n'
-        'Используйте /start для возврата в меню.'
+        "Operation cancelled.\n"
+        "Use /start to return to menu."
     )
     return ConversationHandler.END
 
 
 def main():
     """
-    Запуск бота
+    Start bot
     """
-    # Создаём приложение
+    # Create application
     application = Application.builder().token(BOT_TOKEN).build()
 
-    # ConversationHandler для обработки диалога
+    # ConversationHandler for dialog processing
     conv_handler = ConversationHandler(
         entry_points=[
             CommandHandler('start', start),
@@ -244,11 +334,11 @@ def main():
         allow_reentry=True
     )
 
-    # Добавляем обработчики
+    # Add handlers
     application.add_handler(conv_handler)
 
-    # Запускаем бота
-    print("🤖 Бот запущен!")
+    # Start bot
+    print("Bot is running...")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
