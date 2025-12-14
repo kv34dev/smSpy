@@ -23,6 +23,7 @@ WAITING_USERNAME_STORIES = 2
 ASKING_CONTINUE = 3
 WAITING_SPOTIFY_USER_LINK = 4
 WAITING_SPOTIFY_PLAYLIST_LINK = 5
+WAITING_INSTAGRAM_USERNAME = 6
 
 # Bot token (get from @BotFather)
 BOT_TOKEN = "token"
@@ -196,6 +197,67 @@ def get_tiktok_stories(username):
     return video_urls
 
 
+def get_instagram_avatar_url(username):
+    """
+    Gets avatar URL from Instagram profile
+    """
+    chrome_options = Options()
+    chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--disable-gpu')
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    chrome_options.add_argument('--disable-notifications')
+    chrome_options.add_argument('--disable-popup-blocking')
+    chrome_options.page_load_strategy = 'eager'
+
+    driver = webdriver.Chrome(options=chrome_options)
+    avatar_url = None
+
+    try:
+        profile_url = f"https://www.instagram.com/{username}"
+        print(f"Opening Instagram profile: {profile_url}")
+        driver.get(profile_url)
+
+        time.sleep(3)
+
+        # Remove the blocking div
+        js_code = """
+        var blockingDiv = document.querySelector('div.x1n2onr6.xzkaem6');
+        if (blockingDiv) {
+            blockingDiv.remove();
+        }
+        """
+        driver.execute_script(js_code)
+
+        time.sleep(1)
+
+        page_source = driver.page_source
+
+        # Search for the avatar img inside span element
+        pattern = r'<span class="xnz67gz x1c9tyrk xeusxvb x1pahc9y x1ertn4p x9f619 x1lliihq x2lah0s x6ikm8r x10wlt62 x1n2onr6 xzfakq xhihtb0 x1j8hi7x x172hklt xrw4ojt xg6frx5 xw872ko xhgbb2x xynf4tj xdjs2zz x1r9ni5o xvsnedh xoiy6we x16ouz9t x1qj619r xsrjr5h x1xrz1ek x1s928wv x1unh1gc x1iygr5g x2q1x1w x1j6awrg x1m1drc7"[^>]*>.*?<img[^>]*src="([^"]+)"[^>]*>.*?</span>'
+        matches = re.findall(pattern, page_source, re.DOTALL)
+
+        if matches:
+            avatar_url = matches[0]
+            print(f"Found Instagram avatar: {avatar_url}")
+        else:
+            # Try alternative pattern - search for img with specific classes
+            pattern_alt = r'<img[^>]*class="[^"]*xpdipgo x972fbf[^"]*"[^>]*src="([^"]+)"[^>]*>'
+            matches = re.findall(pattern_alt, page_source)
+            if matches:
+                avatar_url = matches[0]
+                print(f"Found Instagram avatar (alt): {avatar_url}")
+            else:
+                print("Instagram avatar not found in page source")
+
+    except Exception as e:
+        print(f"Error getting Instagram avatar: {e}")
+    finally:
+        driver.quit()
+
+    return avatar_url
+
+
 def get_spotify_image_url(url):
     """
     Gets image URL from Spotify user profile or playlist
@@ -294,7 +356,7 @@ def get_main_menu():
     """
     keyboard = [
         [InlineKeyboardButton("TikTok", callback_data='tiktok')],
-        [InlineKeyboardButton("Instagram (coming soon...)", callback_data='instagram')],
+        [InlineKeyboardButton("Instagram", callback_data='instagram')],
         [InlineKeyboardButton("Spotify", callback_data='spotify')]
     ]
     return InlineKeyboardMarkup(keyboard)
@@ -308,6 +370,19 @@ def get_tiktok_menu():
         [InlineKeyboardButton("Get Avatar", callback_data='tiktok_avatar')],
         [InlineKeyboardButton("View Stories (beta)", callback_data='tiktok_stories')],
         [InlineKeyboardButton("View Reposts (coming soon...)", callback_data='tiktok_reposts')],
+        [InlineKeyboardButton("← Back", callback_data='back_main')]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
+def get_instagram_menu():
+    """
+    Returns Instagram submenu keyboard
+    """
+    keyboard = [
+        [InlineKeyboardButton("Get Avatar", callback_data='instagram_avatar')],
+        [InlineKeyboardButton("View Stories (coming soon...)", callback_data='instagram_stories')],
+        [InlineKeyboardButton("Download full profile (coming soon...)", callback_data='instagram_full_profile')],
         [InlineKeyboardButton("← Back", callback_data='back_main')]
     ]
     return InlineKeyboardMarkup(keyboard)
@@ -370,8 +445,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif query.data == 'instagram':
         await query.edit_message_text(
-            "Instagram module coming soon.\n\n"
-            "Use /start to return to menu."
+            "Instagram OSINT\n\n"
+            "Select action:",
+            reply_markup=get_instagram_menu()
         )
         return ConversationHandler.END
 
@@ -408,6 +484,26 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return WAITING_USERNAME_STORIES
 
     elif query.data == 'tiktok_reposts':
+        await query.edit_message_text(
+            "This feature is coming soon.\n\n"
+            "Use /start to return to menu."
+        )
+        return ConversationHandler.END
+
+    elif query.data == 'instagram_avatar':
+        await query.edit_message_text(
+            "Enter target username (without @):"
+        )
+        return WAITING_INSTAGRAM_USERNAME
+
+    elif query.data == 'instagram_stories':
+        await query.edit_message_text(
+            "This feature is coming soon.\n\n"
+            "Use /start to return to menu."
+        )
+        return ConversationHandler.END
+
+    elif query.data == 'instagram_full_profile':
         await query.edit_message_text(
             "This feature is coming soon.\n\n"
             "Use /start to return to menu."
@@ -525,6 +621,9 @@ async def receive_username_avatar(update: Update, context: ContextTypes.DEFAULT_
     return ConversationHandler.END
 
 
+
+
+
 async def receive_username_stories(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Receives username and parses stories
@@ -581,6 +680,83 @@ async def receive_username_stories(update: Update, context: ContextTypes.DEFAULT
 
         # Delete status message
         await status_message.delete()
+
+        # Ask if user wants to continue
+        await update.message.reply_text(
+            "Do you want to continue?",
+            reply_markup=get_continue_menu()
+        )
+
+    except Exception as e:
+        await status_message.edit_text(
+            f"Error occurred: {str(e)}\n\n"
+            "Try again later or use /start"
+        )
+        print(f"Error: {e}")
+
+    return ConversationHandler.END
+
+
+async def receive_instagram_username(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Receives Instagram username and parses avatar
+    """
+    username = update.message.text.strip().lstrip('@')
+
+    if not username:
+        await update.message.reply_text(
+            "Invalid username.\n"
+            "Try again or use /start"
+        )
+        return WAITING_INSTAGRAM_USERNAME
+
+    # Send search status
+    status_message = await update.message.reply_text(
+        f"Scanning target: @{username}\n"
+        "Please wait..."
+    )
+
+    try:
+        # Get avatar URL
+        avatar_url = get_instagram_avatar_url(username)
+
+        if not avatar_url:
+            await status_message.edit_text(
+                f"Target not found: @{username}\n\n"
+                "Possible reasons:\n"
+                "• Invalid username\n"
+                "• Private profile\n"
+                "• Profile does not exist\n\n"
+                "Use /start for new session."
+            )
+            return ConversationHandler.END
+
+        await status_message.edit_text("Extracting data...")
+
+        # Download avatar
+        avatar_path = download_avatar_to_temp(avatar_url)
+
+        if not avatar_path:
+            await status_message.edit_text(
+                "Failed to extract avatar.\n"
+                "Try again later or use /start"
+            )
+            return ConversationHandler.END
+
+        # Send avatar
+        await status_message.edit_text("Sending data...")
+
+        with open(avatar_path, 'rb') as photo:
+            await update.message.reply_photo(
+                photo=photo,
+                caption=f"Target: @{username}\nData type: Avatar"
+            )
+
+        # Delete status message
+        await status_message.delete()
+
+        # Delete temporary file
+        os.unlink(avatar_path)
 
         # Ask if user wants to continue
         await update.message.reply_text(
@@ -693,7 +869,6 @@ async def receive_spotify_user_link(update: Update, context: ContextTypes.DEFAUL
         print(f"Error: {e}")
 
     return ConversationHandler.END
-
 
 async def receive_spotify_playlist_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -822,6 +997,9 @@ def main():
             ],
             WAITING_USERNAME_STORIES: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, receive_username_stories)
+            ],
+            WAITING_INSTAGRAM_USERNAME: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, receive_instagram_username)
             ],
             WAITING_SPOTIFY_USER_LINK: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, receive_spotify_user_link)
