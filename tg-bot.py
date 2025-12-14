@@ -418,12 +418,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     welcome_text = (
         "smSpy\n\n"
         "Fully anonymous spy tool powered by OSINT\n\n"
+        "<i>Disclaimer: The developer takes no responsibility for any actions performed using this tool. You use it entirely at your own risk. The developer assumes no liability whatsoever use it wisely.</i>\n\n"
         "Select platform:"
     )
 
     await update.message.reply_text(
         welcome_text,
-        reply_markup=get_main_menu()
+        reply_markup=get_main_menu(),
+        parse_mode='HTML'  # включаем поддержку HTML
     )
     return ConversationHandler.END
 
@@ -439,7 +441,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(
             "TikTok OSINT\n\n"
             "If you have trouble accessing stories, you can visit <a href='https://is.gd/LisZbE'>this site</a> to view them from there.\n\n"
-            "(Your IP address may be blocked if you make repeated attempts to access this resource or if you are using Tor browser.)\n\n"
+            "<i>(Your IP address may be blocked if you make repeated attempts to access this resource or if you are using Tor browser.)</i>\n\n"
             "Select action:",
             reply_markup=get_tiktok_menu(),
             parse_mode='HTML',
