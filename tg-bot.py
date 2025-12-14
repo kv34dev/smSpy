@@ -21,6 +21,8 @@ from telegram.ext import (
 WAITING_USERNAME_AVATAR = 1
 WAITING_USERNAME_STORIES = 2
 ASKING_CONTINUE = 3
+WAITING_SPOTIFY_USER_LINK = 4
+WAITING_SPOTIFY_PLAYLIST_LINK = 5
 
 # Bot token (get from @BotFather)
 BOT_TOKEN = "token"
@@ -194,6 +196,58 @@ def get_tiktok_stories(username):
     return video_urls
 
 
+def get_spotify_image_url(url):
+    """
+    Gets image URL from Spotify user profile or playlist
+    """
+    chrome_options = Options()
+    chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--disable-gpu')
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    chrome_options.add_argument('--disable-notifications')
+    chrome_options.add_argument('--disable-popup-blocking')
+    chrome_options.page_load_strategy = 'eager'
+
+    driver = webdriver.Chrome(options=chrome_options)
+    image_url = None
+
+    try:
+        print(f"Opening Spotify URL: {url}")
+        driver.get(url)
+
+        time.sleep(3)
+
+        page_source = driver.page_source
+
+        # Search for div with specific classes containing img
+        pattern = r'<div class="bFtVZZnZgTWjjyzkPA5k"[^>]*>.*?<img[^>]*src="([^"]+)"[^>]*class="[^"]*LBM25IAoFtd0wh7k3EGM[^"]*"[^>]*>.*?</div>'
+        matches = re.findall(pattern, page_source, re.DOTALL)
+
+        if not matches:
+            # Alternative pattern - try to find img with specific classes
+            pattern_alt = r'<img[^>]*class="[^"]*LBM25IAoFtd0wh7k3EGM bFtVZZnZgTWjjyzkPA5k[^"]*"[^>]*src="([^"]+)"[^>]*>'
+            matches = re.findall(pattern_alt, page_source)
+
+        if not matches:
+            # Another alternative - src first
+            pattern_alt2 = r'<img[^>]*src="([^"]+)"[^>]*class="[^"]*LBM25IAoFtd0wh7k3EGM bFtVZZnZgTWjjyzkPA5k[^"]*"[^>]*>'
+            matches = re.findall(pattern_alt2, page_source)
+
+        if matches:
+            image_url = matches[0]
+            print(f"Found image URL: {image_url}")
+        else:
+            print("Image not found in page source")
+
+    except Exception as e:
+        print(f"Error getting Spotify image: {e}")
+    finally:
+        driver.quit()
+
+    return image_url
+
+
 def download_avatar_to_temp(avatar_url):
     """
     Downloads avatar to temporary file
@@ -240,7 +294,8 @@ def get_main_menu():
     """
     keyboard = [
         [InlineKeyboardButton("TikTok", callback_data='tiktok')],
-        [InlineKeyboardButton("Instagram (coming soon...)", callback_data='instagram')]
+        [InlineKeyboardButton("Instagram (coming soon...)", callback_data='instagram')],
+        [InlineKeyboardButton("Spotify", callback_data='spotify')]
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -251,8 +306,20 @@ def get_tiktok_menu():
     """
     keyboard = [
         [InlineKeyboardButton("Get Avatar", callback_data='tiktok_avatar')],
-        [InlineKeyboardButton("View Stories", callback_data='tiktok_stories')],
+        [InlineKeyboardButton("View Stories (beta)", callback_data='tiktok_stories')],
         [InlineKeyboardButton("View Reposts (coming soon...)", callback_data='tiktok_reposts')],
+        [InlineKeyboardButton("← Back", callback_data='back_main')]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
+def get_spotify_menu():
+    """
+    Returns Spotify submenu keyboard
+    """
+    keyboard = [
+        [InlineKeyboardButton("Get User Avatar", callback_data='spotify_user_avatar')],
+        [InlineKeyboardButton("Get Playlist Cover", callback_data='spotify_playlist_cover')],
         [InlineKeyboardButton("← Back", callback_data='back_main')]
     ]
     return InlineKeyboardMarkup(keyboard)
@@ -308,6 +375,14 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return ConversationHandler.END
 
+    elif query.data == 'spotify':
+        await query.edit_message_text(
+            "Spotify OSINT\n\n"
+            "Select action:",
+            reply_markup=get_spotify_menu()
+        )
+        return ConversationHandler.END
+
     elif query.data == 'back_main':
         welcome_text = (
             "smSpy\n\n"
@@ -338,6 +413,20 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Use /start to return to menu."
         )
         return ConversationHandler.END
+
+    elif query.data == 'spotify_user_avatar':
+        await query.edit_message_text(
+            "Send Spotify user profile link\n"
+            "Format: https://open.spotify.com/user/x"
+        )
+        return WAITING_SPOTIFY_USER_LINK
+
+    elif query.data == 'spotify_playlist_cover':
+        await query.edit_message_text(
+            "Send Spotify playlist link\n"
+            "Format: https://open.spotify.com/playlist/x"
+        )
+        return WAITING_SPOTIFY_PLAYLIST_LINK
 
     elif query.data == 'continue_yes':
         welcome_text = (
@@ -509,6 +598,200 @@ async def receive_username_stories(update: Update, context: ContextTypes.DEFAULT
     return ConversationHandler.END
 
 
+async def receive_spotify_user_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Receives Spotify user profile link and extracts avatar
+    """
+    link = update.message.text.strip()
+
+    # Validate link format
+    if not link.startswith("https://open.spotify.com/"):
+        await update.message.reply_text(
+            "Invalid link format.\n"
+            "Expected: https://open.spotify.com/user/x\n\n"
+            "Try again or use /start"
+        )
+        return WAITING_SPOTIFY_USER_LINK
+
+    # Check if user sent playlist link instead
+    if "/playlist/" in link:
+        await update.message.reply_text(
+            "This is a public playlist link.\n"
+            "Please send a user profile link.\n\n"
+            "Format: https://open.spotify.com/user/x"
+        )
+        return WAITING_SPOTIFY_USER_LINK
+
+    # Check if it's a user profile link
+    if "/user/" not in link:
+        await update.message.reply_text(
+            "Invalid link format.\n"
+            "Expected: https://open.spotify.com/user/x\n\n"
+            "Try again or use /start"
+        )
+        return WAITING_SPOTIFY_USER_LINK
+
+    # Send processing status
+    status_message = await update.message.reply_text(
+        "Processing Spotify user profile...\n"
+        "Please wait..."
+    )
+
+    try:
+        # Get image URL from Spotify
+        image_url = get_spotify_image_url(link)
+
+        if not image_url:
+            await status_message.edit_text(
+                "Failed to extract user avatar.\n\n"
+                "Possible reasons:\n"
+                "• Invalid link\n"
+                "• Private profile\n"
+                "• Profile does not exist\n\n"
+                "Use /start for new session."
+            )
+            return ConversationHandler.END
+
+        await status_message.edit_text("Downloading avatar...")
+
+        # Download image
+        image_path = download_avatar_to_temp(image_url)
+
+        if not image_path:
+            await status_message.edit_text(
+                "Failed to download avatar.\n"
+                "Try again later or use /start"
+            )
+            return ConversationHandler.END
+
+        # Send image
+        await status_message.edit_text("Sending data...")
+
+        with open(image_path, 'rb') as photo:
+            await update.message.reply_photo(
+                photo=photo,
+                caption=f"Spotify User Avatar\nSource: {link}"
+            )
+
+        # Delete status message
+        await status_message.delete()
+
+        # Delete temporary file
+        os.unlink(image_path)
+
+        # Ask if user wants to continue
+        await update.message.reply_text(
+            "Do you want to continue?",
+            reply_markup=get_continue_menu()
+        )
+
+    except Exception as e:
+        await status_message.edit_text(
+            f"Error occurred: {str(e)}\n\n"
+            "Try again later or use /start"
+        )
+        print(f"Error: {e}")
+
+    return ConversationHandler.END
+
+
+async def receive_spotify_playlist_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Receives Spotify playlist link and extracts cover
+    """
+    link = update.message.text.strip()
+
+    # Validate link format
+    if not link.startswith("https://open.spotify.com/"):
+        await update.message.reply_text(
+            "Invalid link format.\n"
+            "Expected: https://open.spotify.com/playlist/x\n\n"
+            "Try again or use /start"
+        )
+        return WAITING_SPOTIFY_PLAYLIST_LINK
+
+    # Check if user sent user profile link instead
+    if "/user/" in link:
+        await update.message.reply_text(
+            "This is a public profile link.\n"
+            "Please send a playlist link.\n\n"
+            "Format: https://open.spotify.com/playlist/x"
+        )
+        return WAITING_SPOTIFY_PLAYLIST_LINK
+
+    # Check if it's a playlist link
+    if "/playlist/" not in link:
+        await update.message.reply_text(
+            "Invalid link format.\n"
+            "Expected: https://open.spotify.com/playlist/x\n\n"
+            "Try again or use /start"
+        )
+        return WAITING_SPOTIFY_PLAYLIST_LINK
+
+    # Send processing status
+    status_message = await update.message.reply_text(
+        "Processing Spotify playlist...\n"
+        "Please wait..."
+    )
+
+    try:
+        # Get image URL from Spotify
+        image_url = get_spotify_image_url(link)
+
+        if not image_url:
+            await status_message.edit_text(
+                "Failed to extract playlist cover.\n\n"
+                "Possible reasons:\n"
+                "• Invalid link\n"
+                "• Private playlist\n"
+                "• Playlist does not exist\n\n"
+                "Use /start for new session."
+            )
+            return ConversationHandler.END
+
+        await status_message.edit_text("Downloading cover...")
+
+        # Download image
+        image_path = download_avatar_to_temp(image_url)
+
+        if not image_path:
+            await status_message.edit_text(
+                "Failed to download cover.\n"
+                "Try again later or use /start"
+            )
+            return ConversationHandler.END
+
+        # Send image
+        await status_message.edit_text("Sending data...")
+
+        with open(image_path, 'rb') as photo:
+            await update.message.reply_photo(
+                photo=photo,
+                caption=f"Spotify Playlist Cover\nSource: {link}"
+            )
+
+        # Delete status message
+        await status_message.delete()
+
+        # Delete temporary file
+        os.unlink(image_path)
+
+        # Ask if user wants to continue
+        await update.message.reply_text(
+            "Do you want to continue?",
+            reply_markup=get_continue_menu()
+        )
+
+    except Exception as e:
+        await status_message.edit_text(
+            f"Error occurred: {str(e)}\n\n"
+            "Try again later or use /start"
+        )
+        print(f"Error: {e}")
+
+    return ConversationHandler.END
+
+
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Cancel current operation
@@ -539,6 +822,12 @@ def main():
             ],
             WAITING_USERNAME_STORIES: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, receive_username_stories)
+            ],
+            WAITING_SPOTIFY_USER_LINK: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, receive_spotify_user_link)
+            ],
+            WAITING_SPOTIFY_PLAYLIST_LINK: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, receive_spotify_playlist_link)
             ]
         },
         fallbacks=[CommandHandler('cancel', cancel)],
