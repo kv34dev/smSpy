@@ -234,7 +234,7 @@ def get_instagram_avatar_url(username):
         page_source = driver.page_source
 
         # Search for the avatar img inside span element
-        pattern = r'<span class="xnz67gz x1c9tyrk xeusxvb x1pahc9y x1ertn4p x9f619 x1lliihq x2lah0s x6ikm8r x10wlt62 x1n2onr6 xzfakq xhihtb0 x1j8hi7x x172hklt xrw4ojt xg6frx5 xw872ko xhgbb2x xynf4tj xdjs2zz x1r9ni5o xvsnedh xoiy6we x16ouz9t x1qj619r xsrjr5h x1xrz1ek x1s928wv x1unh1gc x1iygr5g x2q1x1w x1j6awrg x1m1drc7"[^>]*>.*?<img[^>]*src="([^"]+)"[^>]*>.*?</span>'
+        pattern = r'<meta property="og:image" content="([^"]+)"'
         matches = re.findall(pattern, page_source, re.DOTALL)
 
         if matches:
@@ -380,7 +380,7 @@ def get_instagram_menu():
     Returns Instagram submenu keyboard
     """
     keyboard = [
-        [InlineKeyboardButton("Get Avatar", callback_data='instagram_avatar')],
+        [InlineKeyboardButton("Get Avatar (beta)", callback_data='instagram_avatar')],
         [InlineKeyboardButton("View Stories (coming soon...)", callback_data='instagram_stories')],
         [InlineKeyboardButton("Download full profile (coming soon...)", callback_data='instagram_full_profile')],
         [InlineKeyboardButton("← Back", callback_data='back_main')]
@@ -446,6 +446,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == 'instagram':
         await query.edit_message_text(
             "Instagram OSINT\n\n"
+            "️Note: Instagram actively blocks this type of activity due to frequent automated requests, so some features may work unstably or stop working temporarily.\n\n"
             "Select action:",
             reply_markup=get_instagram_menu()
         )
