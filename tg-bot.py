@@ -542,7 +542,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == 'continue_yes':
         welcome_text = (
             "smSpy\n\n"
-            "Fully anonymous spy tool powered by OSINT\n\n"
+            "FULLY ANONYMOUS SPY TOOL\n"
+            "Powered by OSINT\n\n"
+            "<i>Disclaimer: The developer takes no responsibility for any actions performed using this tool. You use it entirely at your own risk. The developer assumes no liability whatsoever use it wisely.</i>\n\n"
             "Select platform:"
         )
         await query.edit_message_text(
