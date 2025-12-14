@@ -417,7 +417,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     welcome_text = (
         "smSpy\n\n"
-        "Fully anonymous spy tool powered by OSINT\n\n"
+        "FULLY ANONYMOUS SPY TOOL\n"
+        "Powered by OSINT\n\n"
         "<i>Disclaimer: The developer takes no responsibility for any actions performed using this tool. You use it entirely at your own risk. The developer assumes no liability whatsoever use it wisely.</i>\n\n"
         "Select platform:"
     )
@@ -425,7 +426,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         welcome_text,
         reply_markup=get_main_menu(),
-        parse_mode='HTML'  # включаем поддержку HTML
+        parse_mode='HTML'
     )
     return ConversationHandler.END
 
@@ -456,7 +457,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "️Note: Instagram actively blocks this type of activity due to frequent automated requests, so some features may work unstably or stop working temporarily.\n\n"
             "If you keep encountering errors, you can visit <a href='https://is.gd/NPa9hj'>this site</a> to use Instagram OSINT from there.\n\n"
             "Select action:",
-            reply_markup=get_tiktok_menu(),
+            reply_markup=get_instagram_menu(),
             parse_mode='HTML',
             disable_web_page_preview=True
         )
@@ -473,12 +474,15 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == 'back_main':
         welcome_text = (
             "smSpy\n\n"
-            "Fully anonymous spy tool powered by OSINT\n\n"
+            "FULLY ANONYMOUS SPY TOOL\n"
+            "Powered by OSINT\n\n"
+            "<i>Disclaimer: The developer takes no responsibility for any actions performed using this tool. You use it entirely at your own risk. The developer assumes no liability whatsoever use it wisely.</i>\n\n"
             "Select platform:"
         )
         await query.edit_message_text(
             welcome_text,
-            reply_markup=get_main_menu()
+            reply_markup=get_main_menu(),
+            parse_mode='HTML'
         )
         return ConversationHandler.END
 
