@@ -438,17 +438,25 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if query.data == 'tiktok':
         await query.edit_message_text(
             "TikTok OSINT\n\n"
+            "If you have trouble accessing stories, you can visit <a href='https://is.gd/LisZbE'>this site</a> to view them from there.\n\n"
+            "(Your IP address may be blocked if you make repeated attempts to access this resource or if you are using Tor browser.)\n\n"
             "Select action:",
-            reply_markup=get_tiktok_menu()
+            reply_markup=get_tiktok_menu(),
+            parse_mode='HTML',
+            disable_web_page_preview=True
         )
         return ConversationHandler.END
+
 
     elif query.data == 'instagram':
         await query.edit_message_text(
             "Instagram OSINT\n\n"
             "️Note: Instagram actively blocks this type of activity due to frequent automated requests, so some features may work unstably or stop working temporarily.\n\n"
+            "If you keep encountering errors, you can visit <a href='https://is.gd/NPa9hj'>this site</a> to use Instagram OSINT from there.\n\n"
             "Select action:",
-            reply_markup=get_instagram_menu()
+            reply_markup=get_tiktok_menu(),
+            parse_mode='HTML',
+            disable_web_page_preview=True
         )
         return ConversationHandler.END
 
