@@ -25,19 +25,17 @@ WAITING_SPOTIFY_USER_LINK = 4
 WAITING_SPOTIFY_PLAYLIST_LINK = 5
 WAITING_INSTAGRAM_USERNAME = 6
 
-# Bot token (get from @BotFather)
 BOT_TOKEN = "token"
 
-# Coordinates for clicking on stories (you can change these)
-STORY_CLICK_X = 760  # X coordinate for first click
-STORY_CLICK_Y = 276  # Y coordinate for first click
+STORY_CLICK_X = 760
+STORY_CLICK_Y = 276
 
-STORY_CLICK_X_2 = 275  # X coordinate for second click
-STORY_CLICK_Y_2 = 25  # Y coordinate for second click
+STORY_CLICK_X_2 = 275
+STORY_CLICK_Y_2 = 25
 
 # Duration settings
-WINDOW_OPEN_DURATION = 1  # How long window stays open in seconds (2 minutes) - CHANGE THIS
-CLICK_INDICATOR_DURATION = 1  # How long red circle shows in seconds - CHANGE THIS
+WINDOW_OPEN_DURATION = 1
+CLICK_INDICATOR_DURATION = 1
 
 
 def get_tiktok_avatar_url(username):
@@ -636,9 +634,6 @@ async def receive_username_avatar(update: Update, context: ContextTypes.DEFAULT_
         print(f"Error: {e}")
 
     return ConversationHandler.END
-
-
-
 
 
 async def receive_username_stories(update: Update, context: ContextTypes.DEFAULT_TYPE):
