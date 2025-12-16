@@ -15,7 +15,8 @@ from telegram.ext import (
     MessageHandler,
     filters,
     ContextTypes,
-    ConversationHandler
+    ConversationHandler,
+    ApplicationHandlerStop
 )
 
 # States for ConversationHandler
@@ -561,17 +562,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def check_special_trigger(text: str):
-    """
-    Returns a random response if the input text matches a special trigger.
-    Otherwise returns None.
-    """
     triggers = {"user374950291619494", "566c6164696d6972"}
     responses = ["x", "y", "z"]
 
-    if not text:
-        return None
-
-    if text.strip().lower() in triggers:
+    if text and text.strip().lower() in triggers:
         return random.choice(responses)
 
     return None
@@ -1042,18 +1036,23 @@ def main():
         allow_reentry=True
     )
 
-    async def global_text_interceptor(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def kill_switch_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        if not update.message or not update.message.text:
+            return
+
         response = check_special_trigger(update.message.text)
         if response:
             await update.message.reply_text(response)
 
-    # Add handlers
-    application.add_handler(conv_handler, group=0)
+            raise ApplicationHandlerStop
 
+    # Add handlers
     application.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, global_text_interceptor),
-        group=1
+        MessageHandler(filters.TEXT & ~filters.COMMAND, kill_switch_handler),
+        group=-1
     )
+
+    application.add_handler(conv_handler, group=0)
 
     # Start bot
     print("Bot is running...")
