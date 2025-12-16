@@ -563,7 +563,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def check_special_trigger(text: str):
     triggers = {"user374950291619494", "566c6164696d6972"}
-    responses = ["x", "y", "z"]
+    responses = ["Haha, yeah… no. 💕", "No no no, nice try though. 😉", "I’ll pretend I didn’t see that 🙈🙈", "Let’s not do that, shall we? ", "🤫🧏‍♂️", "️👀👀👀"]
 
     if text and text.strip().lower() in triggers:
         return random.choice(responses)
