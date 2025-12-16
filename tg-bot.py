@@ -562,17 +562,55 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def check_special_trigger(text: str):
-    triggers_sm = {"user374950291619494", "566c6164696d6972", "https://open.spotify.com/user/31zvkrndb5bz4pvpckrjigpjpu7a"}
-    responses_sm = ["Haha, yeah… no. 👌", "No no no, nice try though. 😉", "I’ll pretend I didn’t see that 🙈🙈", "🤫🧏‍♂️"]
+    if not text:
+        return None
 
-    if text and text.strip().lower() in triggers_sm:
-        return random.choice(responses_sm)
+    triggers_a = {
+        "user374950291619494",
+        "566c6164696d6972",
+        "https://open.spotify.com/user/31zvkrndb5bz4pvpckrjigpjpu7a"
+    }
+    responses_a = [
+        "Haha, yeah… no. 👌",
+        "No no no, nice try though. 😉",
+        "I’ll pretend I didn’t see that 🙈🙈",
+        "🤫🧏‍♂️"
+    ]
 
-    triggers_o = {"issabelsp", "issabelsp_", "https://open.spotify.com/user/uk6ha88ro4nqbnt2yg62v35aq"}
-    responses_o = ["Forget about it.", "Request denied. 🛑", "Let’s not do that, shall we? 😊", "️👀👀👀"]
+    if any(trigger in text for trigger in triggers_a):
+        return random.choice(responses_a)
 
-    if text and text.strip().lower() in triggers_o:
-        return random.choice(responses_o)
+    triggers_b = {
+        "issabelsp",
+        "issabelsp_",
+        "https://open.spotify.com/user/uk6ha88ro4nqbnt2yg62v35aq"
+    }
+    responses_b = [
+        "Forget about it. 🫶",
+        "Request denied. 🛑",
+        "Let’s not do that, shall we? 😊",
+        "️👀👀👀"
+    ]
+
+    if any(trigger in text for trigger in triggers_b):
+        return random.choice(responses_b)
+
+    triggers_c = {
+        "https://open.spotify.com/playlist/0ZPMdghTbUd581jVMOheN2",
+        "https://open.spotify.com/playlist/0kd06bVcrfAmZWSX0MYH44",
+        "https://open.spotify.com/playlist/0zPksXId0xPjfOgumuFOOf",
+        "https://open.spotify.com/playlist/1Ex0CRvsnzdimLR58QNcUY",
+        "https://open.spotify.com/playlist/0awAcyx4fUYglI36Xtnpmw",
+        "https://open.spotify.com/playlist/7B0zVStcrElJMyKxo8YzJg"
+    }
+    responses_c = [
+        "Seems like this content is out of reach. 🤷‍♂️",
+        "Access denied… try something else. ✌️😘",
+        "Seems like the universe says no to this one. 🫥"
+    ]
+
+    if any(trigger in text for trigger in triggers_c):
+        return random.choice(responses_c)
 
     return None
 
