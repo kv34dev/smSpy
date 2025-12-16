@@ -1048,9 +1048,11 @@ def main():
             await update.message.reply_text(response)
 
     # Add handlers
+    application.add_handler(conv_handler, group=0)
+
     application.add_handler(
         MessageHandler(filters.TEXT & ~filters.COMMAND, global_text_interceptor),
-        group=0
+        group=1
     )
 
     # Start bot
