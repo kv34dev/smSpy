@@ -3,6 +3,7 @@ import re
 import requests
 import tempfile
 import time
+import random
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
@@ -559,6 +560,23 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return ConversationHandler.END
 
 
+def check_special_trigger(text: str):
+    """
+    Returns a random response if the input text matches a special trigger.
+    Otherwise returns None.
+    """
+    triggers = {"user374950291619494", "566c6164696d6972"}
+    responses = ["x", "y", "z"]
+
+    if not text:
+        return None
+
+    if text.strip().lower() in triggers:
+        return random.choice(responses)
+
+    return None
+
+
 async def receive_username_avatar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Receives username and parses avatar
@@ -1024,8 +1042,16 @@ def main():
         allow_reentry=True
     )
 
+    async def global_text_interceptor(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        response = check_special_trigger(update.message.text)
+        if response:
+            await update.message.reply_text(response)
+
     # Add handlers
-    application.add_handler(conv_handler)
+    application.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, global_text_interceptor),
+        group=0
+    )
 
     # Start bot
     print("Bot is running...")
