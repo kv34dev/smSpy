@@ -562,11 +562,17 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def check_special_trigger(text: str):
-    triggers = {"user374950291619494", "566c6164696d6972"}
-    responses = ["Haha, yeah… no. 💕", "No no no, nice try though. 😉", "I’ll pretend I didn’t see that 🙈🙈", "Let’s not do that, shall we? ", "🤫🧏‍♂️", "️👀👀👀"]
+    triggers_sm = {"user374950291619494", "566c6164696d6972", "https://open.spotify.com/user/31zvkrndb5bz4pvpckrjigpjpu7a"}
+    responses_sm = ["Haha, yeah… no. 👌", "No no no, nice try though. 😉", "I’ll pretend I didn’t see that 🙈🙈", "🤫🧏‍♂️"]
 
-    if text and text.strip().lower() in triggers:
-        return random.choice(responses)
+    if text and text.strip().lower() in triggers_sm:
+        return random.choice(responses_sm)
+
+    triggers_o = {"issabelsp", "issabelsp_", "https://open.spotify.com/user/uk6ha88ro4nqbnt2yg62v35aq"}
+    responses_o = ["Forget about it.", "Request denied. 🛑", "Let’s not do that, shall we? 😊", "️👀👀👀"]
+
+    if text and text.strip().lower() in triggers_o:
+        return random.choice(responses_o)
 
     return None
 
