@@ -1,5 +1,60 @@
-# smSpy - Automated Anonymus Instagram & TikTok Story Viewer  
-This project provides a Python script that automatically opens **Instagram** and **TikTok** anonymous story-viewer websites in two separate browser windows using **Selenium**, applies a custom **click animation**, bypasses cookie consent buttons, enters usernames, and keeps the pages open for viewing.
+# smSpy — Automated Anonymous Social Media OSINT Bot
+
+**smSpy** is a Python-based OSINT Telegram bot that allows anonymous extraction of publicly available data from **Instagram**, **TikTok**, and **Spotify**.  
+The project combines browser automation (Selenium) with Telegram bot interaction to provide a simple, menu-driven OSINT tool.
+
+> [!WARNING]
+> The developer takes no responsibility for any actions performed using this tool.
+>  
+> You use it entirely at your own risk and are responsible for complying with local laws and platform terms of service.
+
+## Features
+
+- Fetch avatars from **TikTok**, **Instagram**, and **Spotify**
+- View and download **TikTok Stories**
+- View **TikTok reposts**
+- View and download **Instagram Stories**
+- Download **full Instagram profiles**
+- Extract **Spotify playlist covers**
+
+## Usage Principles
+
+- Fully anonymous — **no login required**
+- No authorization in social networks
+- OSINT-based data extraction
+- Works only with publicly available data
+
+## How It Works
+
+- Uses **Selenium (Chrome WebDriver)** to open public profile pages
+- Automatically bypasses basic popups and consent banners
+- Parses required data directly from page source
+- Sends extracted media back to the user via **Telegram**
+- All interactions are handled through an inline-button menu
+
+## Technologies Used
+
+- Python 3.8+
+- `python-telegram-bot`
+- Selenium (Chrome WebDriver)
+- Requests
+- Regular Expressions
+
+## Requirements
+
+Before running the bot, ensure you have:
+
+- **Python 3.8+**
+- **Google Chrome**
+- **ChromeDriver** (matching your Chrome version)
+- Installed dependencies:
+  - `python-telegram-bot`
+  - `selenium`
+  - `requests`
+
+---
+
+This project also provides a Python script that automatically opens **Instagram** and **TikTok** anonymous story-viewer websites in two separate browser windows using **Selenium**, applies a custom **click animation**, bypasses cookie consent buttons, enters usernames, and keeps the pages open for viewing.
 
 Both viewers run **in parallel** using Python threads.
 
