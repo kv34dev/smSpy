@@ -326,11 +326,6 @@
             pointer-events: none;
             z-index: 9999;
         }
-
-        @keyframes scan {
-            0% { top: 0; }
-            100% { top: 100%; }
-        }
     </style>
 </head>
 <body>
@@ -430,7 +425,7 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+        const chars = '0111001101101101010100110111000001111001';
         const fontSize = 14;
         const columns = canvas.width / fontSize;
         const drops = Array(Math.floor(columns)).fill(1);
