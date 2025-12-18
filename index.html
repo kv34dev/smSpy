@@ -49,6 +49,15 @@
             background: linear-gradient(180deg, rgba(0,255,0,0.1) 0%, transparent 100%);
         }
 
+        a {
+            text-decoration: none;
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            overflow-x: hidden;
+            position: relative;
+        }
+
         .logo {
             font-size: 4em;
             font-weight: bold;
@@ -360,7 +369,7 @@
                 </div>
 
                 <div class="feature-card">
-                    <div class="feature-icon">⚡</div>
+                    <div class="feature-icon">⚡️</div>
                     <div class="feature-title">Instant Results</div>
                     <div class="feature-desc">
                         Fast extraction and delivery. Get the information you need in seconds through our Telegram bot interface.
@@ -402,13 +411,13 @@
         </section>
 
         <footer>
-            <div class="terminal-line">> System Status: <span style="color: #00ff00;">ONLINE</span></div>
+            <div class="terminal-line">> System Status: <span style="color: #00ff00;">OFFLINE</span></div>
             <div class="terminal-line">> Security Level: <span style="color: #00ff00;">MAXIMUM</span></div>
             <div class="terminal-line">> Connection: <span style="color: #00ff00;">ENCRYPTED</span></div>
             <div class="terminal-line" style="margin-top: 20px;">
                 > <span class="blink">_</span>
             </div>
-            <p style="margin-top: 30px; opacity: 0.6;">© 2025 smSpy | Anonymous OSINT Tool</p>
+            <p style="margin-top: 30px; opacity: 0.6;">© 2025 smSpy | Anonymous OSINT Tool | <a href="https://github.com/kv34dev/smSpy" target="_blank">Github</a></p>
         </footer>
     </div>
 
@@ -421,7 +430,7 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const chars = '0110110110101';
+        const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
         const fontSize = 14;
         const columns = canvas.width / fontSize;
         const drops = Array(Math.floor(columns)).fill(1);
