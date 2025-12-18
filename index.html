@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <title>smSpy - Anonymous OSINT Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Matrix rain effect */
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.05;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 60px 20px 40px;
+            border-bottom: 2px solid #00ff00;
+            margin-bottom: 40px;
+            background: linear-gradient(180deg, rgba(0,255,0,0.1) 0%, transparent 100%);
+        }
+
+        .logo {
+            font-size: 4em;
+            font-weight: bold;
+            text-shadow: 0 0 20px #00ff00, 0 0 40px #00ff00;
+            animation: glitch 3s infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes glitch {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+        }
+
+        .tagline {
+            font-size: 1.5em;
+            color: #00cc00;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .subtitle {
+            color: #00ff00;
+            font-size: 1.1em;
+            margin-top: 15px;
+            opacity: 0.8;
+        }
+
+        /* Main section */
+        .main-section {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .description {
+            font-size: 1.2em;
+            line-height: 1.8;
+            margin-bottom: 40px;
+            color: #00cc00;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Features grid */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 60px 0;
+        }
+
+        .feature-card {
+            background: rgba(0, 255, 0, 0.05);
+            border: 2px solid #00ff00;
+            padding: 30px;
+            border-radius: 10px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,255,0,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .feature-card:hover::before {
+            left: 100%;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+            border-color: #00ff00;
+        }
+
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        .feature-title {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: #00ff00;
+            text-transform: uppercase;
+        }
+
+        .feature-desc {
+            color: #00cc00;
+            line-height: 1.6;
+        }
+
+        /* Platform list */
+        .platforms {
+            background: rgba(0, 255, 0, 0.05);
+            border: 2px solid #00ff00;
+            padding: 40px;
+            border-radius: 10px;
+            margin: 40px 0;
+        }
+
+        .platforms h2 {
+            text-align: center;
+            font-size: 2em;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+        }
+
+        .platform-list {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .platform-item {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #00ff00;
+            padding: 15px 30px;
+            border-radius: 5px;
+            font-size: 1.2em;
+            transition: all 0.3s;
+        }
+
+        .platform-item:hover {
+            background: rgba(0, 255, 0, 0.1);
+            transform: scale(1.05);
+        }
+
+        /* CTA Button */
+        .cta-section {
+            text-align: center;
+            margin: 60px 0;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: #00ff00;
+            color: #000;
+            padding: 20px 60px;
+            font-size: 1.5em;
+            font-weight: bold;
+            text-decoration: none;
+            text-transform: uppercase;
+            border: 3px solid #00ff00;
+            border-radius: 5px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+        }
+
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.5s, height 0.5s;
+        }
+
+        .cta-button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .cta-button:hover {
+            box-shadow: 0 0 40px #00ff00;
+            transform: scale(1.05);
+        }
+
+        .cta-button span {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Warning section */
+        .warning {
+            background: rgba(255, 0, 0, 0.1);
+            border: 2px solid #ff0000;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 40px 0;
+            text-align: center;
+        }
+
+        .warning-title {
+            color: #ff0000;
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .warning-text {
+            color: #ff6666;
+            line-height: 1.6;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            border-top: 2px solid #00ff00;
+            margin-top: 60px;
+            color: #00cc00;
+        }
+
+        .terminal-line {
+            margin: 5px 0;
+        }
+
+        .blink {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 2.5em;
+            }
+
+            .tagline {
+                font-size: 1.2em;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+
+            .cta-button {
+                padding: 15px 40px;
+                font-size: 1.2em;
+            }
+        }
+
+        /* Scanline effect */
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: rgba(0, 255, 0, 0.3);
+            animation: scan 4s linear infinite;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="matrix-bg" id="matrix"></div>
+    <div class="scanline"></div>
+
+    <div class="container">
+        <header>
+            <div class="logo">smSpy</div>
+            <div class="tagline">Fully Anonymous Spy Tool</div>
+            <div class="subtitle">Powered by OSINT Technology</div>
+        </header>
+
+        <section class="main-section">
+            <div class="description">
+                <p>> Access denied information from social media platforms</p>
+                <p>> Extract data without leaving traces</p>
+                <p>> Professional OSINT capabilities in your hands</p>
+            </div>
+
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">🎭</div>
+                    <div class="feature-title">Anonymous Access</div>
+                    <div class="feature-desc">
+                        Extract public information without revealing your identity. All operations are performed through secure channels.
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <div class="feature-title">Multi-Platform</div>
+                    <div class="feature-desc">
+                        Support for TikTok, Instagram, and Spotify. Access avatars, stories, and other public data across platforms.
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <div class="feature-title">Instant Results</div>
+                    <div class="feature-desc">
+                        Fast extraction and delivery. Get the information you need in seconds through our Telegram bot interface.
+                    </div>
+                </div>
+            </div>
+
+            <div class="platforms">
+                <h2>Supported Platforms</h2>
+                <div class="platform-list">
+                    <div class="platform-item">📱 TikTok</div>
+                    <div class="platform-item">📷 Instagram</div>
+                    <div class="platform-item">🎵 Spotify</div>
+                </div>
+                <div style="margin-top: 30px; color: #00cc00;">
+                    <p>✓ Extract profile avatars</p>
+                    <p>✓ Access public stories (TikTok)</p>
+                    <p>✓ Download playlist covers</p>
+                    <p>✓ More features coming soon...</p>
+                </div>
+            </div>
+
+            <div class="cta-section">
+                <a href="https://t.me/smSpy_bot" class="cta-button" target="_blank">
+                    <span>► Launch Bot</span>
+                </a>
+                <p style="margin-top: 20px; color: #00cc00;">Click to start your secure OSINT session</p>
+            </div>
+
+            <div class="warning">
+                <div class="warning-title">⚠️ Disclaimer</div>
+                <div class="warning-text">
+                    This tool is designed for educational and research purposes only. 
+                    The developer takes no responsibility for any actions performed using this tool. 
+                    You use it entirely at your own risk. Always respect privacy and follow applicable laws.
+                    Use it wisely.
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <div class="terminal-line">> System Status: <span style="color: #00ff00;">ONLINE</span></div>
+            <div class="terminal-line">> Security Level: <span style="color: #00ff00;">MAXIMUM</span></div>
+            <div class="terminal-line">> Connection: <span style="color: #00ff00;">ENCRYPTED</span></div>
+            <div class="terminal-line" style="margin-top: 20px;">
+                > <span class="blink">_</span>
+            </div>
+            <p style="margin-top: 30px; opacity: 0.6;">© 2025 smSpy | Anonymous OSINT Tool</p>
+        </footer>
+    </div>
+
+    <script>
+        // Matrix rain effect
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        document.getElementById('matrix').appendChild(canvas);
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const chars = '0110110110101';
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(10, 10, 10, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#00ff00';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        setInterval(drawMatrix, 50);
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
