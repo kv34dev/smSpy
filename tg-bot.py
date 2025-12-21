@@ -586,8 +586,8 @@ def check_special_trigger(text: str):
         "https://open.spotify.com/user/uk6ha88ro4nqbnt2yg62v35aq"
     }
     responses_b = [
-        "Forget about it. 🫶",
-        "Request denied. 🛑",
+        "Forget about it 🫶",
+        "Request denied 🛑",
         "Let’s not do that, shall we? 😊",
         "️👀👀👀"
     ]
@@ -604,9 +604,9 @@ def check_special_trigger(text: str):
         "https://open.spotify.com/playlist/7B0zVStcrElJMyKxo8YzJg"
     }
     responses_c = [
-        "Seems like this content is out of reach. 🤷‍♂️",
-        "Access denied… try something else. ✌️😘",
-        "Seems like the universe says no to this one. 🫥"
+        "Access denied… try something else ✌️😘",
+        "Rejected. The audacity, honestly 😒",
+        "Seems like the universe says no to this one 🫥"
     ]
 
     if any(trigger in text for trigger in triggers_c):
